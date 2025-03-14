@@ -15,7 +15,7 @@ This project can be run using Docker and Docker Compose, which simplifies setup 
 
 1. Clone this repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/dwisulfahnur/dj-modular
 cd dj-modular
 ```
 
