@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Login | Django Modular
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h1 class="mb-0 text-center mb-4">Login</h1>
+        <div class="card shadow">
+          <div class="card-body p-4">
+            {% if form.errors %}
+              <div class="alert alert-danger">
+                <p class="mb-0">
+                  <strong>Error:</strong> Your username and password didn't match. Please try again.
+                </p>
+              </div>
+            {% endif %}
+
+            {% if next %}
+              {% if user.is_authenticated %}
+                <div class="alert alert-warning">
+                  <p class="mb-0">Your account doesn't have access to this page. To proceed, please login with an account that has access.</p>
+                </div>
+              {% else %}
+                <div class="alert alert-info">
+                  <p class="mb-0">Please login to access this page.</p>
+                </div>
+              {% endif %}
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="id_username" class="form-label">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" autocomplete="username" required autofocus />
+              </div>
+              <div class="mb-3">
+                <label for="id_password" class="form-label">Password</label>
+                <input type="password" name="password" id="id_password" class="form-control" autocomplete="current-password" required />
+              </div>
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-dark-blue">Sign In</button>
+              </div>
+              <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+          </div>
+          <div class="card-footer bg-light">
+            <div class="text-center">
+              <p class="mb-0">Need an account? Contact your administrator</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
