@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 from django.conf import settings
 
-from modular_engine.module_registry import get_registry
+from modular_engine.module_registry import get_registry, register_modules_from_settings
 from modular_engine.models import Module
 
 
@@ -15,6 +15,10 @@ class ModuleListView(ListView):
     context_object_name = 'modules'
 
     def get_queryset(self):
+        # Make sure modules from settings are registered
+        register_modules_from_settings()
+
+        # Now get the registry with all modules
         registry = get_registry()
         modules = registry.get_all_modules()
 
@@ -112,10 +116,10 @@ def reload_urls(request):
     """View to manually force URL reload"""
     # Clear URL caches
     clear_url_caches()
-    
+
     # Reset the URLconf for the current thread
     set_urlconf(None)
-    
+
     # Reload main URLconf module if needed
     if hasattr(settings, 'ROOT_URLCONF'):
         import sys
