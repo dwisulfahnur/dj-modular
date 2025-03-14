@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=djmodular
+      - POSTGRES_USER=djmodular
+      - POSTGRES_PASSWORD=djmodular
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U djmodular"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: always
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://djmodular:djmodular@db:5432/djmodular
+      - DJANGO_SETTINGS_MODULE=djmodular.settings
+    env_file:
+      - ./.env
+
+  test:
+    build: .
+    command: >
+      sh -c "coverage run --source='.' manage.py test modular_engine &&
+             coverage report"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://djmodular:djmodular@db:5432/djmodular_test
+      - DJANGO_SETTINGS_MODULE=djmodular.settings
+      - DJANGO_TEST=True
+    env_file:
+      - ./.env
