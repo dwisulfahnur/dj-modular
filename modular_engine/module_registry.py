@@ -28,7 +28,7 @@ class ModuleRegistry:
             'setup_func': setup_func,
             'url_patterns': url_patterns,
         }
-        
+
         # Just clear URL caches instead of using signals
         clear_url_caches()
 
@@ -53,7 +53,7 @@ class ModuleRegistry:
         # Check if module already exists to determine dates
         module_exists = Module.objects.filter(module_id=module_id).exists()
         old_path = ""
-        
+
         if module_exists:
             try:
                 existing_module = Module.objects.get(module_id=module_id)
@@ -89,7 +89,8 @@ class ModuleRegistry:
 
         # If base_path was provided and changed, reload URLs directly
         if base_path is not None and base_path != old_path:
-            logger.info(f"Module path changed for {module_id} from '{old_path}' to '{base_path}'")
+            logger.info(
+                f"Module path changed for {module_id} from '{old_path}' to '{base_path}'")
             self._reload_urls()
 
         # Reload URLs
@@ -173,22 +174,23 @@ class ModuleRegistry:
         if module_id not in self.available_modules:
             logger.error(f"Module {module_id} not found in registry")
             return False
-            
+
         try:
             module = Module.objects.get(module_id=module_id)
             old_path = module.base_path
             module.base_path = new_base_path
             module.save()
-            
+
             # Directly reload URLs instead of using signals
             self._reload_urls()
-            
+
             # Log the path change
-            logger.info(f"Updated module path for {module_id} from '{old_path}' to '{new_base_path}'")
-            
+            logger.info(
+                f"Updated module path for {module_id} from '{old_path}' to '{new_base_path}'")
+
             # Call reload_urls for backward compatibility
             self._reload_urls()
-            
+
             return True
         except Module.DoesNotExist:
             logger.error(f"Module {module_id} not found in database")
@@ -242,10 +244,10 @@ class ModuleRegistry:
         """Reload URLs to include active modules"""
         # Clear URL caches directly instead of using signals
         clear_url_caches()
-        
+
         # Reset the URLconf for the current thread
         set_urlconf(None)
-        
+
         # Reload main URLconf module if needed
         if hasattr(settings, 'ROOT_URLCONF'):
             import sys
@@ -263,7 +265,7 @@ def initialize_module_registry():
     # Avoid database access during app initialization
     if not connection.is_usable():
         return
-        
+
     # Check if the table exists before trying to query it
     try:
         # Load modules from the database
@@ -271,16 +273,26 @@ def initialize_module_registry():
 
         # Register available modules from settings
         if hasattr(settings, 'AVAILABLE_MODULES'):
+            print(
+                f"Found AVAILABLE_MODULES in settings: {settings.AVAILABLE_MODULES}")
             for module_id in settings.AVAILABLE_MODULES:
                 try:
                     # Try to import the module
+                    print(f"Attempting to import module: {module_id}")
                     module = importlib.import_module(f"{module_id}.module")
 
                     # Register the module
                     if hasattr(module, 'register'):
+                        print(f"Registering module: {module_id}")
                         module.register(registry)
+                        print(f"Module {module_id} registered successfully")
+                    else:
+                        print(f"Module {module_id} has no register function")
                 except (ImportError, AttributeError) as e:
+                    print(f"Error loading module {module_id}: {e}")
                     logger.error(f"Error loading module {module_id}: {e}")
+        else:
+            print("No AVAILABLE_MODULES found in settings")
 
         # Activate installed modules
         for module in installed_modules:
@@ -295,8 +307,12 @@ def initialize_module_registry():
                 # Module was installed but is no longer available
                 module.status = 'not_installed'
                 module.save()
+
+        print(f"Registered modules: {registry.available_modules.keys()}")
+        print(f"Active modules: {registry.modules.keys()}")
     except DatabaseError:
         # Table doesn't exist yet, migrations haven't been run
+        print("Database error during module registry initialization")
         pass
 
     return registry
@@ -316,19 +332,19 @@ def get_module_url_patterns():
     """
     module_patterns = []
     registry = get_registry()
-    
+
     # Include URL patterns for all available modules
     for module_id, module_info in registry.available_modules.items():
         if not module_info.get('url_patterns'):
             continue
-            
+
         try:
             # Try to get the module from the database to check for custom base path
             module = Module.objects.get(module_id=module_id)
-            
+
             # Get the base path (custom or default)
             base_path = module.get_url_path()
-            
+
             # Create the URL pattern with the appropriate base path
             if base_path == '/':
                 # Root path
@@ -345,5 +361,35 @@ def get_module_url_patterns():
             module_patterns.append(
                 path(f"{module_id}/", include(module_info['url_patterns']))
             )
-    
     return module_patterns
+
+
+# Function to manually register modules from settings
+def register_modules_from_settings():
+    """
+    Manually register all modules listed in settings.AVAILABLE_MODULES.
+    This can be used if automatic registration during app initialization fails.
+    """
+    if not hasattr(settings, 'AVAILABLE_MODULES'):
+        logger.warning("No AVAILABLE_MODULES found in settings")
+        return 0
+
+    count = 0
+    for module_id in settings.AVAILABLE_MODULES:
+        if module_id in registry.available_modules:
+            logger.info(f"Module {module_id} is already registered")
+            continue
+
+        try:
+            module = importlib.import_module(f"{module_id}.module")
+
+            if hasattr(module, 'register'):
+                module.register(registry)
+                count += 1
+                logger.info(f"Successfully registered module: {module_id}")
+            else:
+                logger.warning(f"Module {module_id} has no register function")
+        except (ImportError, AttributeError) as e:
+            logger.error(f"Error loading module {module_id}: {e}")
+
+    return count
