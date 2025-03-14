@@ -1,8 +1,10 @@
 from django.contrib.auth.views import LoginView
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 def index(request):
-    return render(request, 'index.html')
+    if request.user.is_authenticated:
+        return redirect('modular_engine:module_list')
+    return redirect('login')
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
