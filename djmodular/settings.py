@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Custom apps
-    'engine',
+    'modular_engine',
     'product_module',
 ]
 
@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Custom middleware
-    'engine.middleware.ModuleURLMiddleware',
+    'modular_engine.middleware.ModuleURLMiddleware',
 ]
 
 ROOT_URLCONF = 'djmodular.urls'
@@ -129,13 +129,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Modular application settings
-AVAILABLE_MODULES = [
-    {
-        'module_id': 'product_module',
-        'app_name': 'product_module',
-    }
-]
+LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
 
-LOGOUT_REDIRECT_URL = '/auth/login/'
-LOGIN_URL = '/auth/login/'
+
+# Modular application settings
+AVAILABLE_MODULES = ['product_module']
+
+CORE_PATHS = ['login', 'logout']
