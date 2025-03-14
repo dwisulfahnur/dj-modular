@@ -19,12 +19,18 @@ git clone https://github.com/dwisulfahnur/dj-modular
 cd dj-modular
 ```
 
-2. Build and start the containers:
+2. Create a .env file from the example template:
+```bash
+cp env.example .env
+```
+   Open the .env file and customize any settings as needed. This file contains important configuration for your application including secret keys and debug settings.
+
+3. Build and start the containers:
 ```bash
 docker compose up -d
 ```
 
-3. Access the application at http://localhost:8000
+4. Access the application at http://localhost:8000
 
 ### Running Tests
 
@@ -105,15 +111,6 @@ The application now includes enhanced module registration capabilities:
 1. Log in as a superuser or manager user
 2. Go to http://localhost:8000/module/ to view the module manager interface
 
-#### Manual Module Registration
-
-If modules from `settings.AVAILABLE_MODULES` aren't showing up, you can manually register them:
-
-```bash
-docker compose exec web python manage.py register_modules
-```
-
-This command will attempt to register all modules listed in `settings.AVAILABLE_MODULES` and provide detailed output about the process.
 
 #### Troubleshooting Module Registration
 
