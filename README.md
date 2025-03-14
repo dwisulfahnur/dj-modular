@@ -130,7 +130,6 @@ docker compose logs -f web
 
 1. **Admin (Superuser)**:
    - Login URL: http://localhost:8000/admin/
-   - Access: Django admin, module management, all installed modules
 
 2. **Management User**:
    - Login URL: http://localhost:8000/login/
@@ -140,35 +139,6 @@ docker compose logs -f web
    - Login URL: http://localhost:8000/login/
    - Access: Only installed modules based on permissions
    - For the product module: Can create, update, and view products
-
-### Setting Up Product Access for Basic Users
-
-To ensure basic users have appropriate permissions for the product module:
-
-```bash
-# First create the necessary permission groups if they don't exist
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import Group; Group.objects.get_or_create(name='Product Users')"
-
-# Add product permissions to the group
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import Group, Permission; from django.contrib.contenttypes.models import ContentType; from product.models import Product; content_type = ContentType.objects.get_for_model(Product); permissions = Permission.objects.filter(content_type=content_type, codename__in=['add_product', 'change_product', 'view_product']); product_group = Group.objects.get(name='Product Users'); product_group.permissions.add(*permissions)"
-
-# Add the basic user to the product users group
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import Group, User; user = User.objects.get(username='user'); product_group = Group.objects.get(name='Product Users'); product_group.user_set.add(user)"
-```
-
-### Module URL Routing
-
-The middleware has been updated to only process paths that start with 'modular_engine/'. 
-This means all module routes are now accessed via URLs of the form:
-
-```
-http://localhost:8000/modular_engine/[module_name]/[module_path]
-```
-
-For example, to access the product module, use:
-```
-http://localhost:8000/modular_engine/product/
-```
 
 ## More Information
 
