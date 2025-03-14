@@ -118,8 +118,8 @@
       // Update the modal content
       document.getElementById('productName').textContent = productName;
       
-      // Update the form action
-      document.getElementById('deleteForm').action = `/product/${productId}/delete/`;
+      // Update the form action with the correct URL
+      document.getElementById('deleteForm').action = "{% url 'product_delete' 0 %}".replace('0', productId);
     });
   });
 </script>
