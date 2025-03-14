@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=w#*nq=28$(s_krxvxw1+pm68*ro-r#!p3yj-ar*kb1nbkhj$@'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-=w#*nq=28$(s_krxvxw1+pm68*ro-r#!p3yj-ar*kb1nbkhj$@')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -40,7 +42,7 @@ INSTALLED_APPS = [
 
     # Custom apps
     'modular_engine',
-    'product_module',
+    'product',
 ]
 
 MIDDLEWARE = [
@@ -53,7 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Custom middleware
-    'modular_engine.middleware.ModuleURLMiddleware',
+    'modular_engine.middleware.ModularEngineMiddleware',
 ]
 
 ROOT_URLCONF = 'djmodular.urls'
@@ -86,6 +88,26 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Use PostgreSQL if DATABASE_URL is set (in Docker)
+if os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+
+# Test-specific configuration
+if os.getenv('DJANGO_TEST') == 'True':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'djmodular_test',
+            'USER': 'djmodular',
+            'PASSWORD': 'djmodular',
+            'HOST': 'db',
+            'PORT': '5432',
+        }
+    }
 
 
 # Password validation
@@ -124,6 +146,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -134,6 +158,6 @@ LOGIN_URL = '/login/'
 
 
 # Modular application settings
-AVAILABLE_MODULES = ['product_module']
+AVAILABLE_MODULES = ['product']
 
 CORE_PATHS = ['login', 'logout']

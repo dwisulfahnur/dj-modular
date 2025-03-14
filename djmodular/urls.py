@@ -21,7 +21,6 @@ from djmodular.views import index, CustomLoginView
 from modular_engine.module_registry import get_module_url_patterns
 
 urlpatterns = [
-    path('', index, name='index'),
     path('admin/', admin.site.urls),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),
