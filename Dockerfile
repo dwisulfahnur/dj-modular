@@ -30,4 +30,4 @@ USER django
 EXPOSE 8000
 
 # Command to run the server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"] 
+CMD ["gunicorn", "djmodular.wsgi:application", "-w=1", "-b=0.0.0.0:8000"]
