@@ -329,3 +329,4 @@ $RECYCLE.BIN/
 *.lnk
 
 dbdata/
+staticfiles/
