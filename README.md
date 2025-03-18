@@ -129,8 +129,3 @@ docker compose exec web python manage.py createsuperuser
    ```bash
    docker compose logs -f web
    ```
-
-## More Information
-
-See [README.modular_engine.md](README.modular_engine.md) for detailed documentation.
-
