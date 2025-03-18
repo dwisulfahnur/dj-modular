@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Custom middleware
+    'modular_engine.middleware.URLPatternSyncMiddleware',
     'modular_engine.middleware.ModularEngineMiddleware',
 ]
 
@@ -110,6 +111,24 @@ if os.getenv('DJANGO_TEST') == 'True':
         }
     }
 
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
+# Use Redis for caching if REDIS_URL is set (in Docker)
+if os.getenv('REDIS_URL'):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

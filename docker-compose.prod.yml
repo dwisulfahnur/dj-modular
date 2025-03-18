@@ -13,13 +13,21 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./redisdata:/data
+
   web:
     build: .
     restart: always
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn -w 3 --preload --threads 2 -b 0.0.0.0:8000 run:application"
+             gunicorn -w 3 --preload --threads 2 -b 0.0.0.0:8000 'run:application'"
     volumes:
       - .:/app
       - ./staticfiles:/app/staticfiles
@@ -28,10 +36,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - DATABASE_URL=postgres://djmodular:djmodular@db:5432/djmodular
       - DJANGO_SETTINGS_MODULE=djmodular.settings
       - DEBUG=0
+      - REDIS_URL=redis://redis:6379/0
     env_file:
       - ./.env 
 

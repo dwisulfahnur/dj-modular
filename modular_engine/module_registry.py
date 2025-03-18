@@ -1,13 +1,19 @@
 import logging
 import importlib
+import json
 from django.conf import settings
 from django.urls import clear_url_caches, include, path, get_resolver, set_urlconf
 from django.utils import timezone
 from django.db import connection
 from django.db import DatabaseError
+from django.core.cache import cache
 from modular_engine.models import Module
 
 logger = logging.getLogger(__name__)
+
+# Cache key for URL pattern reloading
+URL_PATTERNS_CACHE_KEY = 'url_patterns_last_updated'
+URL_PATTERNS_CACHE_TIMEOUT = 60 * 60  # 1 hour
 
 
 class ModuleRegistry:
@@ -255,6 +261,13 @@ class ModuleRegistry:
             urlconf = settings.ROOT_URLCONF
             if urlconf in sys.modules:
                 importlib.reload(sys.modules[urlconf])
+                
+        # Update cache timestamp for URL pattern reload
+        # This will be used by other workers to detect when to reload their URLconf
+        cache.set(URL_PATTERNS_CACHE_KEY, str(timezone.now().timestamp()), URL_PATTERNS_CACHE_TIMEOUT)
+        
+        # Log that URLs have been reloaded
+        logger.info("URL patterns reloaded for module registry")
 
 
 # Singleton instance of the registry

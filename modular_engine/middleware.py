@@ -1,7 +1,64 @@
 from django.http import Http404
 from django.conf import settings
-from modular_engine.models import Module
+from django.core.cache import cache
+from django.urls import clear_url_caches, set_urlconf
+import importlib
+import sys
 import time
+import logging
+from modular_engine.models import Module
+from modular_engine.module_registry import URL_PATTERNS_CACHE_KEY
+
+logger = logging.getLogger(__name__)
+
+
+class URLPatternSyncMiddleware:
+    """
+    Middleware that checks if URL patterns have been updated in another worker
+    and reloads them if necessary to ensure all workers share the same URLconf.
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.last_check = time.time()
+        self.check_interval = 5  # seconds
+        self.last_pattern_update = None
+        
+        # Get initial timestamp from cache
+        self.last_pattern_update = cache.get(URL_PATTERNS_CACHE_KEY)
+    
+    def __call__(self, request):
+        current_time = time.time()
+        
+        # Only check periodically to avoid excessive cache hits
+        if current_time - self.last_check > self.check_interval:
+            self.last_check = current_time
+            self._check_for_url_pattern_updates()
+            
+        return self.get_response(request)
+        
+    def _check_for_url_pattern_updates(self):
+        """Check if URL patterns have been updated by another worker"""
+        current_timestamp = cache.get(URL_PATTERNS_CACHE_KEY)
+        
+        # If there's a timestamp and it's different from our last known update
+        if current_timestamp and current_timestamp != self.last_pattern_update:
+            logger.info(f"URL pattern update detected, reloading URLconf (timestamp: {current_timestamp})")
+            
+            # Clear URL caches
+            clear_url_caches()
+            
+            # Reset URLconf
+            set_urlconf(None)
+            
+            # Reload main URLconf module
+            if hasattr(settings, 'ROOT_URLCONF'):
+                urlconf = settings.ROOT_URLCONF
+                if urlconf in sys.modules:
+                    importlib.reload(sys.modules[urlconf])
+            
+            # Update our last known timestamp
+            self.last_pattern_update = current_timestamp
 
 
 class ModularEngineMiddleware:
