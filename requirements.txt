@@ -10,6 +10,7 @@ coverage==7.4.1
 dj-database-url==2.1.0
 Django==5.1.7
 durationpy==0.9
+gunicorn==23.0.0
 hjson==3.1.0
 idna==3.10
 iniconfig==2.0.0
