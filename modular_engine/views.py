@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect
 from django.urls import reverse, clear_url_caches, set_urlconf
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
@@ -7,6 +7,7 @@ from django.conf import settings
 
 from modular_engine.module_registry import get_registry, register_modules_from_settings
 from modular_engine.models import Module
+from .decorators import staff_required
 
 
 class ModuleListView(ListView):
@@ -35,6 +36,7 @@ class ModuleListView(ListView):
 
 
 @require_POST
+@staff_required
 def install_module(request, module_id):
     """View to install a module"""
     registry = get_registry()
@@ -48,12 +50,14 @@ def install_module(request, module_id):
         messages.success(
             request, f"Module '{module_id}' installed successfully")
     else:
-        messages.error(request, f"Failed to install module '{module_id}'")
+        messages.error(
+            request, f"Failed to install module '{module_id}'", extra_tags='danger')
 
     return redirect(reverse('modular_engine:module_list'))
 
 
 @require_POST
+@staff_required
 def uninstall_module(request, module_id):
     """View to uninstall a module"""
     registry = get_registry()
@@ -64,12 +68,14 @@ def uninstall_module(request, module_id):
         messages.success(
             request, f"Module '{module_id}' uninstalled successfully")
     else:
-        messages.error(request, f"Failed to uninstall module '{module_id}'")
+        messages.error(
+            request, f"Failed to uninstall module '{module_id}'", extra_tags='danger')
 
     return redirect(reverse('modular_engine:module_list'))
 
 
 @require_POST
+@staff_required
 def upgrade_module_view(request, module_id):
     """View to upgrade a module"""
     registry = get_registry()
@@ -80,12 +86,13 @@ def upgrade_module_view(request, module_id):
         messages.success(
             request, f"Module '{module_id}' upgraded successfully")
     else:
-        messages.error(request, f"Failed to upgrade module '{module_id}'")
+        messages.error(request, f"Failed to upgrade module '{module_id}'", extra_tags='danger')
 
     return redirect(reverse('modular_engine:module_list'))
 
 
 @require_POST
+@staff_required
 def update_module_path(request, module_id):
     """View to update the base path of a module"""
     registry = get_registry()
@@ -107,7 +114,7 @@ def update_module_path(request, module_id):
                 request, f"Module path for '{module_id}' updated successfully")
     else:
         messages.error(
-            request, f"Failed to update path for module '{module_id}'")
+            request, f"Failed to update path for module '{module_id}'", extra_tags='danger')
 
     return redirect(reverse('modular_engine:module_list'))
 
