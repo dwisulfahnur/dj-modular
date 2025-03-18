@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=djmodular
+      - POSTGRES_USER=djmodular
+      - POSTGRES_PASSWORD=djmodular
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U djmodular"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: always
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn -w 3 -b 0.0.0.0:8000 run:application"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://djmodular:djmodular@db:5432/djmodular
+      - DJANGO_SETTINGS_MODULE=djmodular.settings
+      - DEBUG=0
+    env_file:
+      - ./.env 
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web 
