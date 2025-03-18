@@ -1,142 +1,136 @@
 # Django Modular Engine
 
-A reusable Django application that provides a dynamic module system. It allows you to develop, register, install, and manage modules within your Django project, supporting a plug-and-play architecture.
+A demo Django application that provides a dynamic module system, enabling plug-and-play module development, registration, installation, and management within your Django project.
 
-## Running with Docker
+## Table of Contents
 
-This project can be run using Docker and Docker Compose, which simplifies setup and ensures consistent environments.
+- [Getting Started](#getting-started)
+  - [Running with a Virtual Environment](#running-with-a-virtual-environment)
+  - [Running with Docker](#running-with-docker)
+- [User Management](#user-management)
+  - [Creating Users](#creating-users)
+  - [Testing Different User Roles](#testing-different-user-roles)
+- [Module Management](#module-management)
+  - [Viewing Available Modules](#viewing-available-modules)
+  - [Troubleshooting Module Registration](#troubleshooting-module-registration)
+- [More Information](#more-information)
 
-### Prerequisites
+## Getting Started
 
-- Docker
-- Docker Compose
+### Running with a Virtual Environment
 
-### Getting Started
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/dwisulfahnur/dj-modular
+   cd dj-modular
+   ```
 
-1. Clone this repository:
-```bash
-git clone https://github.com/dwisulfahnur/dj-modular
-cd dj-modular
-```
+2. **Set Up a Virtual Environment**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-2. Create a .env file from the example template:
-```bash
-cp env.example .env
-```
-   Open the .env file and customize any settings as needed. This file contains important configuration for your application including secret keys and debug settings.
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-3. Build and start the containers:
-```bash
-docker compose up -d
-```
+4. **Configure Environment Variables**
+   ```bash
+   cp env.example .env
+   ```
+   Customize `.env` as needed.
 
-4. Access the application at http://localhost:8000
+5. **Apply Migrations & Run the Server**
+   ```bash
+   python manage.py migrate
+   python manage.py runserver
+   ```
 
-### Running Tests
+6. **Run Tests**
+   ```bash
+   python manage.py test
+   ```
 
-To run the tests using Docker:
+7. **Create a Superuser**
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-```bash
-docker compose run test
-```
+### Running with Docker
 
-This will run the tests for the modular_engine app and generate a coverage report.
+#### Prerequisites
 
-### Development
+- Docker & Docker Compose
 
-- The project code is mounted as a volume, so changes you make to the code will be reflected in the running application.
-- The database data is persisted in a Docker volume.
+#### Steps
 
-### Common Commands
+1. **Clone the Repository & Configure Environment**
+   ```bash
+   git clone https://github.com/dwisulfahnur/dj-modular
+   cd dj-modular
+   cp env.example .env
+   ```
 
-- Start the services: `docker compose up -d`
-- Stop the services: `docker compose down`
-- View logs: `docker compose logs -f web`
-- Run a management command: `docker compose exec web python manage.py <command>`
-- Run tests: `docker compose run test`
-- Create a superuser: `docker compose exec web python manage.py createsuperuser`
+2. **Build and Start Containers**
+   ```bash
+   docker compose up -d
+   ```
 
-## Testing from Browser
+3. **Access the Application** at [http://localhost:8000](http://localhost:8000)
 
-The application provides different interfaces and permissions for different user types. Follow these steps to test the application from a browser:
+4. **Run Tests**
+   ```bash
+   docker compose run test
+   ```
+
+5. **Common Docker Commands**
+   - Start services: `docker compose up -d`
+   - Stop services: `docker compose down`
+   - View logs: `docker compose logs -f web`
+   - Run Django commands: `docker compose exec web python manage.py <command>`
+   - Create a superuser: `docker compose exec web python manage.py createsuperuser`
+
+## User Management
 
 ### Creating Users
 
-#### Creating a Superuser (Admin)
-
-Superusers have full access to the Django admin interface and all application features:
-
+#### Superuser (Admin)
 ```bash
+./manage.py createsuperuser
+
+# with docker
 docker compose exec web python manage.py createsuperuser
 ```
 
-Follow the prompts to create a superuser account. You'll need to provide:
-- Username
-- Email address (optional)
-- Password
-
-#### Creating Management Users
-
-Management users have access to the module management interface but not the full admin panel:
-
-1. First, create a regular user:
-```bash
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_user('manager', 'manager@example.com', 'password')"
-```
-
-2. Then, add the user to the management group:
-```bash
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import Group, User; manager = User.objects.get(username='manager'); manager_group, _ = Group.objects.get_or_create(name='Product Managers'); manager_group.user_set.add(manager)"
-```
-
-#### Creating Basic Users
-
-1. Basic users have limited access, only to features provided by installed modules:
-
-```bash
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_user('user', 'user@example.com', 'password')"
-```
-
-2. Then, add the user to the user groups:
-```bash
-docker compose exec web python manage.py shell -c "from django.contrib.auth.models import Group, User; user_basic = User.objects.get(username='user'); product_user_group, _ = Group.objects.get_or_create(name='Product Users'); product_user_group.user_set.add(user_basic)"
-```
-
-### Registering and Managing Modules
-
-The application now includes enhanced module registration capabilities:
-
-#### Viewing Available Modules
-
-1. Log in as a superuser or manager user
-2. Go to http://localhost:8000/module/ to view the module manager interface
-
-
-#### Troubleshooting Module Registration
-
-If you encounter issues with module registration, check the following:
-
-1. Ensure the module package is correctly structured with a `module.py` file
-2. Verify that the module ID is correctly listed in `settings.AVAILABLE_MODULES`
-3. Check the logs for any errors during module loading:
-```bash
-docker compose logs -f web
-```
+#### Management Users
+1. Create a user via Django Admin (`/admin/`).
+2. Assign the user to the "Product Managers" group.
 
 ### Testing Different User Roles
 
-1. **Admin (Superuser)**:
-   - Login URL: http://localhost:8000/admin/
+- **Admin (Superuser):** `/admin/`
+- **Management User:** `/login/` (Access: Module management, all installed modules)
+- **Basic User:** `/login/` (Access: Installed modules based on permissions)
 
-2. **Management User**:
-   - Login URL: http://localhost:8000/login/
-   - Access: Module management, all installed modules
+## Module Management
 
-3. **Basic User**:
-   - Login URL: http://localhost:8000/login/
-   - Access: Only installed modules based on permissions
-   - For the product module: Can create, update, and view products
+### Viewing Available Modules
+
+- Login as a superuser or manager.
+- Navigate to `/module/` to view module manager interface.
+
+### Troubleshooting Module Registration
+
+1. Ensure the module contains a `module.py` file.
+2. Verify the module ID is in `settings.AVAILABLE_MODULES`.
+3. Check logs for errors:
+   ```bash
+   docker compose logs -f web
+   ```
 
 ## More Information
 
-See [README.modular_engine.md](README.modular_engine.md) for detailed documentation about the Django Modular Engine.
+See [README.modular_engine.md](README.modular_engine.md) for detailed documentation.
+
