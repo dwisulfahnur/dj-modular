@@ -339,8 +339,8 @@ def get_module_url_patterns():
             continue
 
         try:
-            # Try to get the module from the database to check for custom base path
-            module = Module.objects.get(module_id=module_id)
+            # Try to get the module from the database to check for custom base path and status 'installed'
+            module = Module.objects.get(module_id=module_id, status='installed')
 
             # Get the base path (custom or default)
             base_path = module.get_url_path()
@@ -357,10 +357,9 @@ def get_module_url_patterns():
                     path(f"{base_path}/", include(module_info['url_patterns']))
                 )
         except Module.DoesNotExist:
-            # Module not in database, use module_id as path
-            module_patterns.append(
-                path(f"{module_id}/", include(module_info['url_patterns']))
-            )
+            # Module not in database, dont add the module to the url patterns
+            pass
+
     return module_patterns
 
 
